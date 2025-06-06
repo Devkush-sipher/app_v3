@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import altair as alt
@@ -7,14 +6,24 @@ from utils import load_data, save_sleep
 
 st.set_page_config(page_title="Sleep Tracker", page_icon="😴")
 
-# Background
-st.markdown('\n<style>\n[data-testid="stApp"] {\n    background-image: url("https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?auto=format&fit=cover&w=1920&q=80");\n    background-size: cover;\n    background-attachment: fixed;\n}\n</style>\n', unsafe_allow_html=True)
+# Background: (you can replace this URL with any preferred sleep-themed image)
+st.markdown(
+    """
+    <style>
+    [data-testid="stApp"] {
+        background-image: url("https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?auto=format&fit=cover&w=1920&q=80");
+        background-size: cover;
+        background-attachment: fixed;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-# Title with Pikachu
-st.image("https://i.imgur.com/9NYeDKY.png", width=150)
+st.image("https://i.imgur.com/9NYeDKY.png", width=120)
 st.title("😴 Sleep Tracker")
 
-# Add new log
+# Add new sleep log
 st.header("Add New Sleep Log")
 col1, col2 = st.columns(2)
 with col1:
@@ -25,6 +34,7 @@ with col2:
 
 if st.button("Add Log"):
     start_dt = datetime.combine(sleep_date, start_time)
+    # If user sets a wake time earlier than bed time, assume next day
     end_dt = datetime.combine(
         sleep_date + timedelta(days=1 if end_time < start_time else 0),
         end_time
@@ -32,17 +42,18 @@ if st.button("Add Log"):
     save_sleep(start_dt, end_dt)
     st.success("Sleep log saved! Refresh to see the updated chart.")
 
-# Line plot: day vs hours slept
+# Fetch sleep data and plot
 sleep_df, _, _ = load_data()
 if sleep_df.empty:
-    st.info("No sleep data yet.")
+    st.info("No sleep data yet. Add one above to see the chart.")
 else:
     st.subheader("Sleep Duration by Date")
+    # Line chart: day vs. hours slept
     line_chart = alt.Chart(sleep_df).mark_line(point=True).encode(
-        x=alt.X('date:T', title="Date"),
-        y=alt.Y('duration:Q', title="Hours Slept"),
-        tooltip=['date:T','duration:Q']
+        x=alt.X("date:T", title="Date"),
+        y=alt.Y("duration:Q", title="Hours Slept"),
+        tooltip=["date:T", "duration:Q"]
     ).properties(height=400)
     st.altair_chart(line_chart, use_container_width=True)
 
-    st.dataframe(sleep_df.sort_values('date', ascending=False), use_container_width=True)
+    st.dataframe(sleep_df.sort_values("date", ascending=False), use_container_width=True)

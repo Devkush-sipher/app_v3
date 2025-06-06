@@ -3,9 +3,10 @@ import pandas as pd
 from datetime import date
 from utils import load_data
 
+# Page configuration
 st.set_page_config(page_title="My Life Dashboard", page_icon="🏠", layout="wide")
 
-# Apply Pokéball background and footer
+# Pokéball background & footer CSS
 st.markdown(
     """
     <style>
@@ -29,37 +30,44 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# Title and instructions (no hyperlinks, just mention sidebar)
 st.title("🏠 My Life Dashboard")
-st.markdown("Use the sidebar to navigate to different trackers.  \nBelow is a calendar-style overview of your sleep, expenses and tasks for this month.")
+st.markdown(
+    """
+    Use the sidebar to navigate to different trackers.  
+    Below is a calendar-style overview of your sleep, expenses, and tasks for this month.
+    """,
+    unsafe_allow_html=True
+)
 
 # Footer text
 st.markdown('<div class="footer">made with &lt;3 by Team_pikachu</div>', unsafe_allow_html=True)
 
-# Load data from CSVs
+# Load data
 sleep_df, exp_df, todo_df = load_data()
 
-# KPI cards
+# Show three KPI cards at the top
 col1, col2, col3 = st.columns(3)
 with col1:
     st.metric("Total Sleep Logs", len(sleep_df))
     if not sleep_df.empty:
-        st.metric("Avg Sleep (hrs)", f"{sleep_df['duration'].mean():.1f}")
+        avg_sleep = sleep_df["duration"].mean()
+        st.metric("Avg Sleep (hrs)", f"{avg_sleep:.1f}")
 with col2:
-    total_paid = exp_df[exp_df["status"] == "Paid"]["amount"].sum() if not exp_df.empty else 0.0
-    total_pending = exp_df[exp_df["status"] == "Pending"]["amount"].sum() if not exp_df.empty else 0.0
-    st.metric("Total Paid", f"${total_paid:,.2f}")
-    st.metric("Pending", f"${total_pending:,.2f}")
+    paid_sum = exp_df[exp_df["status"] == "Paid"]["amount"].sum() if not exp_df.empty else 0.0
+    pend_sum = exp_df[exp_df["status"] == "Pending"]["amount"].sum() if not exp_df.empty else 0.0
+    st.metric("Total Paid", f"${paid_sum:,.2f}")
+    st.metric("Pending", f"${pend_sum:,.2f}")
 with col3:
     today = pd.Timestamp(date.today())
     tasks_today = len(todo_df[todo_df["date"] == today]) if not todo_df.empty else 0
     st.metric("Tasks Today", tasks_today)
 
-# Build a calendar-style summary table for the current month (6 weeks = 42 days)
+# Build a 6-week (42-day) calendar-style summary for the current month
 start_month = date.today().replace(day=1)
 dates = pd.date_range(start_month, periods=42)
 summary = pd.DataFrame({"date": dates})
 
-# Map sleep durations, expenses, and tasks to each date
 summary["Sleep (hrs)"] = summary["date"].map(
     lambda d: sleep_df.loc[sleep_df["date"] == pd.Timestamp(d.date()), "duration"].sum()
 )
